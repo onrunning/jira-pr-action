@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request_target:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [14.18.0]
+
+    steps:
+      - name: Get PR commit ref #️⃣
+        id: gitRef
+        run: |
+          if [ "${{ github.event_name }}" == 'pull_request_target' ]; then
+            echo "::set-output name=sha::${{ github.event.pull_request.head.sha }}"
+          else
+            echo "::set-output name=sha::${{ github.sha }}"
+          fi
+
+      - name: Checkout branch 🛎
+        uses: actions/checkout@main
+        with:
+          ref: ${{ steps.gitRef.outputs.sha }}
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v2.5.1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Get yarn cache directory path 🛠
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache node_modules 📦
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies 📦
+        run: yarn
+
+      - name: Run linter 👀
+        run: yarn lint
+
+      - name: Run tests 🧪
+        run: yarn test
