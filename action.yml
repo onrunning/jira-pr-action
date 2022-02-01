@@ -1,0 +1,23 @@
+name: Jira Pull Request
+author: On Running
+description: Add Jira ticket to PR title / add links to PR description
+inputs:
+  github-token:
+    description: The GitHub token used to create an authenticated client
+    default: ${{ github.token }}
+    required: false
+  jira-account:
+    description: Subdomain used for jira link (i.e. foobar => https://foobar.atlassian.net/browse/ABC-123)
+    required: true
+  ticket-regex:
+    description: Regex to match jira ticket in branch name (i.e. ^ABC-\d+)
+    required: true
+  clean-title-regex:
+    description: Regex used to delete text from PR title
+    required: false
+  preview-link:
+    description: Preview link to add to PR description (i.e. https://preview.example.com)
+    required: false
+runs:
+  using: node16
+  main: dist/index.js
