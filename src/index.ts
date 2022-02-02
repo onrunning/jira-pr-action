@@ -4,7 +4,11 @@ import { context, getOctokit } from '@actions/github'
 const INPUT_GITHUB_TOKEN = 'github-token'
 const INPUT_JIRA_ACCOUNT = 'jira-account'
 const INPUT_TICKET_REGEX = 'ticket-regex'
+const INPUT_TICKET_REGEX_FLAGS = 'ticket-regex-flags'
+const INPUT_EXCEPTION_REGEX = 'exception-regex'
+const INPUT_EXCEPTION_REGEX_FLAGS = 'exception-regex-flags'
 const INPUT_CLEAN_TITLE_REGEX = 'clean-title-regex'
+const INPUT_CLEAN_TITLE_REGEX_FLAGS = 'clean-title-regex-flags'
 const INPUT_PREVIEW_LINK = 'preview-link'
 
 const PREVIEW_LINK_TEXT = 'Preview'
@@ -21,7 +25,11 @@ async function run(): Promise<void> {
     const token = core.getInput(INPUT_GITHUB_TOKEN)
     const jiraAccount = core.getInput(INPUT_JIRA_ACCOUNT)
     const ticketRegexInput = core.getInput(INPUT_TICKET_REGEX)
+    const ticketRegexFlags = core.getInput(INPUT_TICKET_REGEX_FLAGS)
+    const exceptionRegex = core.getInput(INPUT_EXCEPTION_REGEX)
+    const exceptionRegexFlags = core.getInput(INPUT_EXCEPTION_REGEX_FLAGS)
     const cleanTitleRegexInput = core.getInput(INPUT_CLEAN_TITLE_REGEX)
+    const cleanTitleRegexFlags = core.getInput(INPUT_CLEAN_TITLE_REGEX_FLAGS)
     const previewLink = core.getInput(INPUT_PREVIEW_LINK)
 
     const requiredInputs = {
@@ -37,8 +45,10 @@ async function run(): Promise<void> {
       return
     }
     const github = getOctokit(token)
-    const ticketRegex = new RegExp(ticketRegexInput)
-    const cleanTitleRegex = cleanTitleRegexInput ? new RegExp(cleanTitleRegexInput) : undefined
+    const ticketRegex = new RegExp(ticketRegexInput, ticketRegexFlags)
+    const cleanTitleRegex = cleanTitleRegexInput
+      ? new RegExp(cleanTitleRegexInput, cleanTitleRegexFlags)
+      : undefined
 
     const prNumber = context.payload.pull_request.number
     const prTitle = cleanPullRequestTitle(
@@ -55,7 +65,7 @@ async function run(): Promise<void> {
     const prPreviewLine = previewLink ? `**[${PREVIEW_LINK_TEXT}](${previewLink})**\n` : ''
 
     let ticketLine = ''
-    const headBranch = context.payload.pull_request.head.ref.toUpperCase()
+    const headBranch = context.payload.pull_request.head.ref
     const [ticketInBranch] = headBranch.match(ticketRegex) || []
 
     if (ticketInBranch) {
@@ -64,11 +74,12 @@ async function run(): Promise<void> {
 
       if (!ticketRegex.test(prTitle)) request.title = `${ticketInBranch} - ${prTitle}`
     } else {
-      const regexStr = ticketRegex.toString()
-      core.setFailed(
-        `The current branch name does not start with a Jira ticket ${regexStr}. ` +
-          'Have you installed the git hook by running "yarn install"?'
-      )
+      const isException = new RegExp(exceptionRegex, exceptionRegexFlags).test(ticketInBranch)
+
+      if (!isException) {
+        const regexStr = ticketRegex.toString()
+        core.setFailed(`The current branch name does not start with a Jira ticket ${regexStr}.`)
+      }
     }
     if (prPreviewLine || ticketLine) {
       let hasBodyChanged = false

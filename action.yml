@@ -12,8 +12,22 @@ inputs:
   ticket-regex:
     description: Regex to match jira ticket in branch name (i.e. ^ABC-\d+)
     required: true
+  ticket-regex-flags:
+    description: Flags to add to ticket-regex
+    default: i
+    required: false
+  exception-regex:
+    description: Regex to allow exceptions where ticket-regex wouldn't match
+    default: ^dependabot\/
+    required: false
+  exception-regex-flags:
+    description: Flags to add to exception-regex
+    required: false
   clean-title-regex:
     description: Regex used to delete text from PR title
+    required: false
+  clean-title-regex-flags:
+    description: Flags to add to clean-title-regex
     required: false
   preview-link:
     description: Preview link to add to PR description (i.e. https://preview.example.com)

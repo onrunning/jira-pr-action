@@ -16,13 +16,17 @@ Make sure we create small pull requests tackling only one ticket. If a ticket re
 
 ## Inputs
 
-| input               | required | description                                                                                   |
-| ------------------- | :------: | --------------------------------------------------------------------------------------------- |
-| `github-token`      |    ❌    | The GitHub token used to create an authenticated client (default: `${{ github.token }}`       |
-| `jira-account`      |    ✅    | Subdomain used for jira link (i.e. `foobar` => `https://foobar.atlassian.net/browse/ABC-123`) |
-| `ticket-regex`      |    ✅    | Regex to match jira ticket in branch name (i.e. `^ABC-\d+`)                                   |
-| `clean-title-regex` |    ❌    | Regex used to delete text from PR title                                                       |
-| `preview-link`      |    ❌    | Preview link to add to PR description (i.e. `https://preview.example.com`)                    |
+| input                     | required | description                                                                                   |
+| ------------------------- | :------: | --------------------------------------------------------------------------------------------- |
+| `github-token`            |    ❌    | The GitHub token used to create an authenticated client (default: `${{ github.token }}`       |
+| `jira-account`            |    ✅    | Subdomain used for jira link (i.e. `foobar` => `https://foobar.atlassian.net/browse/ABC-123`) |
+| `ticket-regex`            |    ✅    | Regex to match jira ticket in branch name (i.e. `^ABC-\d+`)                                   |
+| `ticket-regex-flags`      |    ❌    | Flags to add to ticket-regex (default: `i`)                                                   |
+| `exception-regex`         |    ❌    | Regex to allow exceptions where ticket-regex wouldn't match (default: `^dependabot\/`)        |
+| `exception-regex-flags`   |    ❌    | Flags to add to exception-regex                                                               |
+| `clean-title-regex`       |    ❌    | Regex used to delete text from PR title                                                       |
+| `clean-title-regex-flags` |    ❌    | Flags to add to clean-title-regex                                                             |
+| `preview-link`            |    ❌    | Preview link to add to PR description (i.e. `https://preview.example.com`)                    |
 
 ## Usage
 
@@ -35,7 +39,7 @@ on:
 
 jobs:
   title-and-description:
-    if: github.actor != 'dependabot[bot]' # this is needed if you use Dependabot
+    if: github.actor != 'dependabot[bot]' # to avoid running it on Dependabot PRs
     runs-on: ubuntu-latest
 
     steps:

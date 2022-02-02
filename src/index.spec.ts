@@ -19,6 +19,8 @@ async function mockContext(options: {
   prBody?: string
   jiraAccount?: string
   ticketRegex?: string
+  ticketRegexFlags?: string
+  exceptionRegex?: string
   cleanTitleRegex?: string
   preview?: string
   updateStatus?: number
@@ -31,6 +33,8 @@ async function mockContext(options: {
     prBody = 'body',
     jiraAccount = 'account',
     ticketRegex = '^A1C-\\d+',
+    ticketRegexFlags = 'i',
+    exceptionRegex = '^dependabot\\/',
     cleanTitleRegex = '^\\s*A1\\s+c\\s+\\d+\\s*',
     preview = 'preview',
     updateStatus = HTTP_STATUS_SUCCESS,
@@ -49,8 +53,11 @@ async function mockContext(options: {
       if (input === 'github-token') return 'abc123'
       if (input === 'jira-account') return jiraAccount
       if (input === 'ticket-regex') return ticketRegex
+      if (input === 'ticket-regex-flags') return ticketRegexFlags
+      if (input === 'exception-regex') return exceptionRegex
       if (input === 'clean-title-regex') return cleanTitleRegex
       if (input === 'preview-link') return preview
+      return ''
     }),
     setFailed: setFailedSpy,
     error: errorSpy,
@@ -105,6 +112,28 @@ describe('#pull-request', () => {
 
       it('sets error status', () => {
         expect(errorSpy).toHaveBeenCalledWith('Missing required inputs: jira-account, ticket-regex')
+      })
+
+      it('does not update PR', () => {
+        expect(prUpdateSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('and when ticket-regex input is provided', () => {
+      beforeAll(async () => {
+        jest.resetModules()
+        jest.resetAllMocks()
+        const options = {
+          branch: 'AAA-444-foo-bar',
+          jiraAccount: '',
+          ticketRegex: '^AAA-\\d+-',
+        }
+        ;({ errorSpy, prUpdateSpy } = await mockContext(options))
+        await import('.')
+      })
+
+      it('sets error status', () => {
+        expect(errorSpy).toHaveBeenCalledWith('Missing required input: jira-account')
       })
 
       it('does not update PR', () => {
@@ -268,24 +297,60 @@ describe('#pull-request', () => {
   })
 
   describe('when current branch does not include Jira ticket', () => {
-    beforeAll(async () => {
-      jest.resetModules()
-      jest.resetAllMocks()
-      preview = 'preview-456'
-      ;({ setFailedSpy, prUpdateSpy } = await mockContext({ branch: 'foo-bar', preview }))
-      await import('.')
+    describe('and when exception-regex input does not match current branch', () => {
+      beforeAll(async () => {
+        jest.resetModules()
+        jest.resetAllMocks()
+        preview = 'preview-456'
+        const options = { branch: 'foo-bar', preview, exceptionRegex: '^exception' }
+        ;({ setFailedSpy, prUpdateSpy } = await mockContext(options))
+        await import('.')
+      })
+
+      it('sets failed status', () => {
+        expect(setFailedSpy).toHaveBeenCalledWith(
+          expect.stringContaining('branch name does not start with a Jira ticket')
+        )
+      })
+
+      it('updates PR description with preview link only', () => {
+        expect(prUpdateSpy).toHaveBeenCalledWith({
+          ...DEFAULT_REQUEST_OPTIONS,
+          body: `**[Preview](${preview})**\n\nbody`,
+        })
+      })
     })
 
-    it('sets failed status', () => {
-      expect(setFailedSpy).toHaveBeenCalledWith(
-        expect.stringContaining('branch name does not start with a Jira ticket')
-      )
-    })
+    describe('and when current branch is dependabot', () => {
+      describe('and when no exception-regex input is provided', () => {
+        beforeAll(async () => {
+          jest.resetModules()
+          jest.resetAllMocks()
+          ticket = 'A1C-1234'
+          preview = 'preview-123'
+          const options = {
+            branch: `${ticket}-some-feature`,
+            preview,
+            updateStatus: HTTP_STATUS_SUCCESS,
+          }
+          ;({ setFailedSpy, errorSpy, prUpdateSpy } = await mockContext(options))
+          await import('.')
+        })
 
-    it('updates PR description with preview link only', () => {
-      expect(prUpdateSpy).toHaveBeenCalledWith({
-        ...DEFAULT_REQUEST_OPTIONS,
-        body: `**[Preview](${preview})**\n\nbody`,
+        it('does not set failed status', () => {
+          expect(setFailedSpy).not.toHaveBeenCalled()
+          expect(errorSpy).not.toHaveBeenCalled()
+        })
+
+        it('updates PR title and description', () => {
+          expect(prUpdateSpy).toHaveBeenCalledWith({
+            ...DEFAULT_REQUEST_OPTIONS,
+            title: `${ticket} - title`,
+            body:
+              `**[Preview](${preview})**\n` +
+              `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nbody`,
+          })
+        })
       })
     })
   })
