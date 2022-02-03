@@ -1,7 +1,7 @@
 name: CI
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - main
 
@@ -15,19 +15,8 @@ jobs:
         node: [16.13.2]
 
     steps:
-      - name: Get PR commit ref #️⃣
-        id: gitRef
-        run: |
-          if [ "${{ github.event_name }}" == 'pull_request_target' ]; then
-            echo "::set-output name=sha::${{ github.event.pull_request.head.sha }}"
-          else
-            echo "::set-output name=sha::${{ github.sha }}"
-          fi
-
       - name: Checkout branch 🛎
-        uses: actions/checkout@main
-        with:
-          ref: ${{ steps.gitRef.outputs.sha }}
+        uses: actions/checkout@v2
 
       - name: Setup node env 🏗
         uses: actions/setup-node@v2.5.1
