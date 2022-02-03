@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [14.18.0]
+        node: [16.13.2]
 
     steps:
       - name: Get PR commit ref #️⃣

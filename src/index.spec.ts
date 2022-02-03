@@ -509,7 +509,7 @@ describe('#pull-request', () => {
     })
 
     it('sets failed status', () => {
-      expect(setFailedSpy).toHaveBeenCalledWith(expect.stringContaining('Cannot read property'))
+      expect(setFailedSpy).toHaveBeenCalledWith(expect.stringContaining('Cannot read properties'))
     })
 
     it('does not update PR', () => {

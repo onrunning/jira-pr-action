@@ -14,7 +14,7 @@
     "test": "jest"
   },
   "engines": {
-    "node": "14.18.0",
+    "node": "16.13.2",
     "yarn": ">=1.22.5"
   },
   "dependencies": {
