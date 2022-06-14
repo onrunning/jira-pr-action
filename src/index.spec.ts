@@ -326,10 +326,9 @@ describe('#pull-request', () => {
         beforeAll(async () => {
           jest.resetModules()
           jest.resetAllMocks()
-          ticket = 'A1C-1234'
           preview = 'preview-123'
           const options = {
-            branch: `${ticket}-some-feature`,
+            branch: 'dependabot/npm_and_yarn/swiper-8.2.4',
             preview,
             updateStatus: HTTP_STATUS_SUCCESS,
           }
@@ -342,13 +341,10 @@ describe('#pull-request', () => {
           expect(errorSpy).not.toHaveBeenCalled()
         })
 
-        it('updates PR title and description', () => {
+        it('updates PR description with preview link only', () => {
           expect(prUpdateSpy).toHaveBeenCalledWith({
             ...DEFAULT_REQUEST_OPTIONS,
-            title: `${ticket} - title`,
-            body:
-              `**[Preview](${preview})**\n` +
-              `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nbody`,
+            body: `**[Preview](${preview})**\n\nbody`,
           })
         })
       })
