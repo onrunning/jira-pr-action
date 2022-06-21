@@ -74,7 +74,7 @@ async function run(): Promise<void> {
 
       if (!ticketRegex.test(prTitle)) request.title = `${ticketInBranch} - ${prTitle}`
     } else {
-      const isException = new RegExp(exceptionRegex, exceptionRegexFlags).test(ticketInBranch)
+      const isException = new RegExp(exceptionRegex, exceptionRegexFlags).test(headBranch)
 
       if (!isException) {
         const regexStr = ticketRegex.toString()
