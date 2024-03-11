@@ -33,5 +33,5 @@ inputs:
     description: Preview link to add to PR description (i.e. https://preview.example.com)
     required: false
 runs:
-  using: node16
+  using: node20
   main: dist/index.js

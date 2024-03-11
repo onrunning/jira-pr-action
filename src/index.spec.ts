@@ -441,7 +441,7 @@ describe('#pull-request', () => {
 
       it('sets failed status', () => {
         expect(setFailedSpy).toHaveBeenCalledWith(
-          expect.stringContaining('branch name does not start with a Jira ticket')
+          expect.stringContaining('Neither current branch nor title start with a Jira ticket')
         )
       })
 
@@ -598,7 +598,7 @@ describe('#pull-request', () => {
 
       it('sets failed status', () => {
         expect(setFailedSpy).toHaveBeenCalledWith(
-          expect.stringContaining('branch name does not start with a Jira ticket')
+          expect.stringContaining('Neither current branch nor title start with a Jira ticket')
         )
       })
 
