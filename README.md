@@ -1,12 +1,12 @@
 # Jira pull-request Github action
 
-If the branch name of the current pull request starts with a Jira ticket:
+If the branch name of the current pull request or the title starts with a Jira ticket:
 
 - It adds the ticket number to the PR title
 - It adds the Jira link to the PR description
 - It also adds a preview link to the PR description if provided as `preview-link` input
 
-If the branch name does not start with a Jira ticket:
+If the branch name and the PR title does not start with a Jira ticket:
 
 - The workflow will fail
 
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Add Jira ticket to PR title / add links to PR description
-        uses: onrunning/jira-pr-action@v1
+        uses: onrunning/jira-pr-action@v2
         with:
           jira-account: account-name
           ticket-regex: ^A1C-\\d+
