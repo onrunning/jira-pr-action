@@ -79,7 +79,7 @@ async function run(): Promise<void> {
 
       if (!isException) {
         const regexStr = ticketRegex.toString()
-        core.setFailed(`The current branch name does not start with a Jira ticket ${regexStr}.`)
+        core.setFailed(`Neither current branch nor title start with a Jira ticket ${regexStr}.`)
       }
     }
     if (prPreviewLine || ticketLine) {
