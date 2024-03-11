@@ -66,7 +66,8 @@ async function run(): Promise<void> {
 
     let ticketLine = ''
     const headBranch = context.payload.pull_request.head.ref
-    const [ticketInBranch] = headBranch.match(ticketRegex) || []
+    const [ticketInBranch] =
+      headBranch.match(ticketRegex) || context.payload.pull_request.title.match(ticketRegex) || []
 
     if (ticketInBranch) {
       const jiraLink = `https://${jiraAccount}.atlassian.net/browse/${ticketInBranch}`

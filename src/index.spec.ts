@@ -296,6 +296,138 @@ describe('#pull-request', () => {
     })
   })
 
+  describe('when title includes Jira ticket', () => {
+    describe('and when PR update request is successful', () => {
+      describe('and when PR description already includes preview/Jira links', () => {
+        describe('and when links are changing', () => {
+          beforeAll(async () => {
+            jest.resetModules()
+            jest.resetAllMocks()
+            ticket = 'A1C-1234'
+            preview = 'https://preview-123.example.com'
+            const options = {
+              branch: `some-feature`,
+              preview,
+              updateStatus: HTTP_STATUS_SUCCESS,
+              prBody: '**[Preview](foo-bar.com)**\n**[Jira ticket](jira.com)**\n\nMore details',
+              prTitle: `${ticket} - some-feature`,
+            }
+            ;({ setFailedSpy, errorSpy, prUpdateSpy } = await mockContext(options))
+            await import('.')
+          })
+
+          it('does not set failed status', () => {
+            expect(setFailedSpy).not.toHaveBeenCalled()
+            expect(errorSpy).not.toHaveBeenCalled()
+          })
+
+          it('updates the current links in description', () => {
+            expect(prUpdateSpy).toHaveBeenCalledWith({
+              ...DEFAULT_REQUEST_OPTIONS,
+              body:
+                `**[Preview](${preview})**\n` +
+                `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nMore details`,
+            })
+          })
+        })
+
+        describe('and when links are not changing', () => {
+          describe('and when PR title already includes Jira ticket', () => {
+            beforeAll(async () => {
+              jest.resetModules()
+              jest.resetAllMocks()
+              ticket = 'A1C-1234'
+              preview = 'preview-123'
+              const options = {
+                branch: `${ticket}-some-feature`,
+                preview,
+                updateStatus: HTTP_STATUS_SUCCESS,
+                prTitle: `${ticket} - Some feature`,
+                prBody:
+                  `**[Preview](${preview})**\n` +
+                  `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nMore details`,
+              }
+              ;({ setFailedSpy, errorSpy, prUpdateSpy } = await mockContext(options))
+              await import('.')
+            })
+
+            it('does not set failed status', () => {
+              expect(setFailedSpy).not.toHaveBeenCalled()
+              expect(errorSpy).not.toHaveBeenCalled()
+            })
+
+            it('does not update PR', () => {
+              expect(prUpdateSpy).not.toHaveBeenCalled()
+            })
+          })
+        })
+      })
+
+      describe('and when PR description does not include preview/Jira links yet', () => {
+        beforeAll(async () => {
+          jest.resetModules()
+          jest.resetAllMocks()
+          ticket = 'A1C-1234'
+          preview = 'preview-123'
+          const options = {
+            branch: `${ticket}-some-feature`,
+            preview,
+            updateStatus: HTTP_STATUS_SUCCESS,
+          }
+          ;({ setFailedSpy, errorSpy, prUpdateSpy } = await mockContext(options))
+          await import('.')
+        })
+
+        it('does not set failed status', () => {
+          expect(setFailedSpy).not.toHaveBeenCalled()
+          expect(errorSpy).not.toHaveBeenCalled()
+        })
+
+        it('updates PR title and description', () => {
+          expect(prUpdateSpy).toHaveBeenCalledWith({
+            ...DEFAULT_REQUEST_OPTIONS,
+            title: `${ticket} - title`,
+            body:
+              `**[Preview](${preview})**\n` +
+              `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nbody`,
+          })
+        })
+      })
+    })
+
+    describe('and when PR update request fails', () => {
+      beforeAll(async () => {
+        jest.resetModules()
+        jest.resetAllMocks()
+        ticket = 'A1C-1234'
+        preview = 'preview-123'
+        const options = {
+          branch: `${ticket}-some-feature`,
+          preview,
+          updateStatus: HTTP_STATUS_ERROR,
+        }
+        ;({ errorSpy, prUpdateSpy } = await mockContext(options))
+        await import('.')
+      })
+
+      it('tries to update PR title and description', () => {
+        expect(prUpdateSpy).toHaveBeenCalledWith({
+          ...DEFAULT_REQUEST_OPTIONS,
+          title: `${ticket} - title`,
+          body:
+            `**[Preview](${preview})**\n` +
+            `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nbody`,
+        })
+      })
+
+      it('sets error status', () => {
+        expect(errorSpy).toHaveBeenCalledWith(
+          `Updating the pull request has failed with ${HTTP_STATUS_ERROR}`
+        )
+      })
+    })
+  })
+
   describe('when current branch does not include Jira ticket', () => {
     describe('and when exception-regex input does not match current branch', () => {
       beforeAll(async () => {
